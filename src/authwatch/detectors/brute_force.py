@@ -14,6 +14,7 @@ from authwatch.detectors._common import (
     format_duration,
     group_by,
     normalise_user,
+    source_key,
 )
 from authwatch.models import Alert, AuthEvent, Severity
 
@@ -23,10 +24,10 @@ MITRE = ("T1110.001",)
 
 def detect(events: Sequence[AuthEvent], config: DetectionConfig) -> list[Alert]:
     failures = [e for e in events if not e.success]
-    groups = group_by(failures, lambda e: (e.source_ip, normalise_user(e)))
+    groups = group_by(failures, lambda e: (source_key(e), normalise_user(e)))
 
     alerts: list[Alert] = []
-    for (ip, _), group in groups.items():
+    for (src, _), group in groups.items():
         for burst in find_bursts(group, config.bf_window, config.bf_threshold):
             first, last = burst[0], burst[-1]
             user = first.username or "?"
@@ -35,14 +36,14 @@ def detect(events: Sequence[AuthEvent], config: DetectionConfig) -> list[Alert]:
                     rule=RULE,
                     severity=Severity.HIGH,
                     mitre=MITRE,
-                    source_ip=ip or "?",
+                    source=src or "?",
                     usernames=(user,),
                     count=len(burst),
                     first_seen=first.timestamp,
                     last_seen=last.timestamp,
                     computers=computers(burst),
                     description=(
-                        f"{len(burst)} failed logons for account '{user}' from {ip} "
+                        f"{len(burst)} failed logons for account '{user}' from {src} "
                         f"within {format_duration(last.timestamp - first.timestamp)}"
                     ),
                 )

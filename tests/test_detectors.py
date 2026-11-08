@@ -19,7 +19,7 @@ class TestBruteForce:
         assert alert.severity is Severity.HIGH
         assert alert.mitre == ("T1110.001",)
         assert alert.usernames == ("admin",)
-        assert alert.source_ip == "10.0.0.5"
+        assert alert.source == "10.0.0.5"
         assert alert.computers == ("DC01",)
 
     def test_below_threshold_is_quiet(self, failures):

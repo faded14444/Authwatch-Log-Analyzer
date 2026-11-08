@@ -28,11 +28,18 @@ to check that real files parse correctly.
 attack techniques, organised by MITRE ATT&CK tactic:
 <https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES>
 
-Files used during development (real 4624/4625 events, ~68 KB each):
+Files used during development (~68 KB each):
 
-- `Credential Access/CA_4624_4625_LogonType2_LogonProc_chrome.evtx`
+- `Credential Access/kerberos_pwd_spray_4771.evtx` - **a real password-spraying run against a
+  domain controller** (Kerberos 4768/4771). authwatch must report password spraying and a
+  critical successful logon for `normal`; `tests/test_kerberos_ntlm.py` checks exactly that.
+- `Credential Access/CA_4624_4625_LogonType2_LogonProc_chrome.evtx` - real 4624/4625 events
 - `Command and Control/DE_RDP_Tunneling_4624.evtx` - RDP logons from `127.0.0.1`, which led
   to the "keep loopback RDP" rule in `filters.py`
+
+```bash
+curl -L -o samples/kerberos_pwd_spray_4771.evtx "https://raw.githubusercontent.com/sbousseaden/EVTX-ATTACK-SAMPLES/master/Credential%20Access/kerberos_pwd_spray_4771.evtx"
+```
 
 ```bash
 curl -L -o samples/DE_RDP_Tunneling_4624.evtx "https://raw.githubusercontent.com/sbousseaden/EVTX-ATTACK-SAMPLES/master/Command%20and%20Control/DE_RDP_Tunneling_4624.evtx"

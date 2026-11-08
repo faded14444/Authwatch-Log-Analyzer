@@ -67,6 +67,14 @@ def find_bursts(
     return bursts
 
 
+def source_key(event: AuthEvent) -> str | None:
+    """Where an attempt came from: the IP address, or - when the log records no IP,
+    as in NTLM event 4776 - the client workstation name (case-insensitive)."""
+    if event.source_ip:
+        return event.source_ip
+    return event.source_host.upper() if event.source_host else None
+
+
 def normalise_user(event: AuthEvent) -> str:
     """Account key for grouping.
 

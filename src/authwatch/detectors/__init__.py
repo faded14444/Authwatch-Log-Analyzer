@@ -22,7 +22,7 @@ def run_detections(
     config = config or DetectionConfig()
     ordered = sorted(events, key=lambda e: e.timestamp)
     alerts = [alert for detect in DETECTORS for alert in detect(ordered, config)]
-    alerts.sort(key=lambda a: (-a.severity, a.first_seen, a.rule, a.source_ip))
+    alerts.sort(key=lambda a: (-a.severity, a.first_seen, a.rule, a.source))
     return alerts
 
 

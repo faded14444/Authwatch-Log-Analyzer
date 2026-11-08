@@ -17,6 +17,7 @@ from authwatch.config import DetectionConfig
 from authwatch.models import Severity
 from authwatch.parsers import LogParseError
 from authwatch.reporters.console import render
+from authwatch.reporters.html_report import write_html
 from authwatch.reporters.json_report import write_json
 from authwatch.scan import collect_files, scan
 
@@ -52,6 +53,10 @@ def build_parser() -> argparse.ArgumentParser:
         "or folders (searched recursively)",
     )
     s.add_argument("-o", "--output", type=Path, help="also write alerts to this JSON file")
+    s.add_argument(
+        "--html", type=Path, metavar="FILE",
+        help="also write a self-contained HTML report with an attack timeline",
+    )
     s.add_argument(
         "--linux-year", type=_positive_int, metavar="YEAR",
         help="year of the LAST line in Linux logs whose lines have no year "
@@ -136,5 +141,12 @@ def main(
             err_console.print(f"[bold red]error:[/] cannot write {args.output}: {exc}")
             return EXIT_ERROR
         console.print(f"Alerts written to [bold]{args.output}[/]")
+    if args.html:
+        try:
+            write_html(alerts, result.summary, result.events, args.html)
+        except OSError as exc:
+            err_console.print(f"[bold red]error:[/] cannot write {args.html}: {exc}")
+            return EXIT_ERROR
+        console.print(f"HTML report written to [bold]{args.html}[/]")
 
     return EXIT_ALERTS if alerts else EXIT_OK

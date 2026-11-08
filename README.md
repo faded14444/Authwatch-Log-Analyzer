@@ -40,10 +40,13 @@ Summary: 3 alert(s) - 1 critical, 2 high
 - **Windows:** parses native `.evtx` files directly - no manual export to CSV needed
 - **Linux:** parses OpenSSH logs from Debian/Ubuntu (`auth.log`) and RHEL/Fedora (`secure`),
   including rotated `.gz` files, classic and RFC 3339 syslog timestamps
-- Three detection rules mapped to MITRE ATT&CK, shared by both log sources
+- **Active Directory:** reads domain-controller events - Kerberos (4768, 4771) and NTLM
+  (4776) - where password spraying against a domain is actually visible
+- Three detection rules mapped to MITRE ATT&CK, shared by all log sources
 - Sliding time windows: one long attack produces **one** alert, not hundreds
 - Noise filtering of local, loopback and machine-account logons (common false positives)
-- Colour terminal report + **JSON output** ready for a SIEM, a script or `jq`
+- Colour terminal report, **JSON output** for a SIEM, a script or `jq`, and a
+  **self-contained HTML report** with an attack timeline
 - Robust: a corrupted record, chunk or line is skipped and reported, not fatal
 - Script-friendly exit codes: `0` no alerts, `1` alerts found, `2` error
 
@@ -71,6 +74,9 @@ authwatch scan Security.evtx
 # Linux: current and rotated logs at once
 authwatch scan /var/log/auth.log /var/log/auth.log.1 /var/log/auth.log.2.gz
 
+# domain controller Security log, with an HTML report for the ticket
+authwatch scan DC01-Security.evtx --html report.html
+
 # a whole folder (searched recursively for *.evtx, auth.log*, secure*),
 # only high+ alerts, save JSON
 authwatch scan logs/ --min-severity high --output alerts.json
@@ -92,7 +98,15 @@ See [`samples/`](samples/README.md) for the demo log and public attack recording
 | Source | Failure | Success |
 |---|---|---|
 | Windows `.evtx` | event **4625** (an account failed to log on) | event **4624** (an account was successfully logged on) |
+| Domain controller - Kerberos | **4771** pre-auth failed with `0x18` wrong password or `0x12` account disabled/locked; **4768** with `0x6` unknown account | **4768** TGT issued (`0x0`) |
+| Domain controller - NTLM | **4776** with `0xC000006A` wrong password, `0xC0000064` unknown account, `0xC000006D`, `0xC0000072` disabled, `0xC0000234` locked out | **4776** with `0x0` |
 | Linux SSH | `Failed password for [invalid user] NAME from IP` | `Accepted <method> for NAME from IP` |
+
+Other result codes are skipped on purpose: a Kerberos clock-skew error (`0x25`) or an
+expired password (`0x17`) is an IT problem, not someone guessing credentials. NTLM event
+4776 records **no IP address**, only the client workstation name - authwatch then uses that
+name as the source of the attempt. IPv4-mapped addresses (`::ffff:10.0.0.5`, common in
+4768) are normalised to IPv4, so one attacker is never split into two sources.
 
 On Linux, other lines about the same attempt (`Invalid user …`, `pam_unix(sshd:auth):
 authentication failure`, `Connection closed …`) are deliberately **ignored** - counting them
@@ -103,9 +117,42 @@ too would report each attempt two or three times. rsyslog's
 
 | Rule | Groups by | Fires when (default) | Severity | MITRE ATT&CK |
 |---|---|---|---|---|
-| **Brute-force** | source IP + account | ≥ 10 failures within 5 min | high | [T1110.001](https://attack.mitre.org/techniques/T1110/001/) Password Guessing |
-| **Password spraying** | source IP | ≥ 5 *distinct accounts* failing within 30 min | high | [T1110.003](https://attack.mitre.org/techniques/T1110/003/) Password Spraying |
-| **Success after failures** | source IP | a success preceded by ≥ 5 failures within 10 min | **critical** | [T1110](https://attack.mitre.org/techniques/T1110/) → [T1078](https://attack.mitre.org/techniques/T1078/) Valid Accounts |
+| **Brute-force** | source + account | ≥ 10 failures within 5 min | high | [T1110.001](https://attack.mitre.org/techniques/T1110/001/) Password Guessing |
+| **Password spraying** | source | ≥ 5 *distinct accounts* failing within 30 min | high | [T1110.003](https://attack.mitre.org/techniques/T1110/003/) Password Spraying |
+| **Success after failures** | source | a success preceded by ≥ 5 failures within 10 min | **critical** | [T1110](https://attack.mitre.org/techniques/T1110/) → [T1078](https://attack.mitre.org/techniques/T1078/) Valid Accounts |
+
+*Source* = the source IP address, or the workstation name for NTLM events that carry no IP.
+
+## Tested on a real attack
+
+Besides synthetic tests, authwatch is checked against `kerberos_pwd_spray_4771.evtx` from
+[EVTX-ATTACK-SAMPLES](https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES) - a recording of
+a real password-spraying run against a domain controller:
+
+```
+$ authwatch scan samples/kerberos_pwd_spray_4771.evtx
+CRITICAL  Success after failures  172.16.66.1  normal          9  2020-07-22 20:29:36  T1110, T1078
+HIGH      Password spraying       172.16.66.1  admin, … +7     9  2020-07-22 20:29:36  T1110.003
+  1. CRITICAL Account 'normal' logged on successfully from 172.16.66.1 after 9 failed attempts
+     against other accounts - verify this logon
+  2. HIGH 9 failed logons against 9 different accounts from 172.16.66.1 within 0s
+```
+
+Nine accounts were tried within 20 milliseconds (7 that do not exist - Kerberos `0x6` - and
+2 with a wrong password - `0x18`), then the attacker obtained a ticket for `normal`. The two
+successful requests were logged once as `172.16.66.1` and once as `::ffff:172.16.66.1`; IP
+normalisation merges them into a single alert. This check runs as a test
+(`tests/test_kerberos_ntlm.py`) whenever the sample is present - see
+[`samples/`](samples/README.md).
+
+## HTML report
+
+`--html report.html` writes one self-contained file: summary cards, a timeline of failed
+and successful logons with alert windows shaded behind the bars, and the alert table with
+links to MITRE ATT&CK. It uses no JavaScript and loads nothing from the internet, so it
+opens on an air-gapped SOC workstation and can be attached to a ticket as-is. Every value
+taken from the logs is HTML-escaped: account and host names can be attacker-controlled, and
+a report that rendered them raw would itself be an XSS vector.
 
 Account names are compared the way each OS does it: **case-insensitive on Windows**
 (`ADMIN` = `admin`), **case-sensitive on Linux** (`Root` and `root` are different users).
@@ -148,7 +195,9 @@ recording from EVTX-ATTACK-SAMPLES.
   the December → January rollover, and treats the times as UTC. RFC 3339 timestamps
   (`2026-10-01T09:14:02+02:00`) carry both and are converted exactly.
 - Distributed attacks from many IPs (one attempt per IP) are not correlated yet.
-- Kerberos pre-auth failures (4771) and NTLM validation (4776) are not parsed yet.
+- Logs from a domain controller and from a member server describe the same attempt twice
+  (e.g. 4625 on the server + 4776 on the DC). Scanning both together counts it in both
+  places; scan them separately when exact counts matter.
 - All times are reported in UTC.
 
 ## Architecture
@@ -171,7 +220,7 @@ reports did not change.
 ## Development
 
 ```bash
-pytest          # 100 tests: rules (incl. edge cases), both parsers, filters, reports, CLI
+pytest          # 130+ tests: rules (incl. edge cases), all parsers, filters, reports, CLI
 ruff check .    # lint
 ```
 
@@ -185,8 +234,8 @@ end-to-end on the demo log.
 
 - [x] Windows Security `.evtx` parser
 - [x] Linux SSH `auth.log` / `secure` parser
-- [ ] HTML report with a timeline chart
-- [ ] Kerberos (4771) and NTLM (4776) failures
+- [x] Domain controller events: Kerberos (4768, 4771) and NTLM (4776)
+- [x] HTML report with a timeline chart
 - [ ] Correlation of distributed attacks across many source IPs
 
 ## Responsible use

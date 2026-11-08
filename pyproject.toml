@@ -4,15 +4,15 @@ build-backend = "hatchling.build"
 
 [project]
 name = "authwatch"
-version = "0.2.0"
-description = "Detect brute-force, password spraying and suspicious logons in Windows (.evtx) and Linux SSH logs"
+version = "0.3.0"
+description = "Detect brute-force, password spraying and suspicious logons in Windows, Active Directory and Linux SSH logs"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "python-evtx>=0.8",
     "rich>=13",
 ]
-keywords = ["security", "soc", "blue-team", "windows", "evtx", "linux", "ssh", "detection", "mitre-attack"]
+keywords = ["security", "soc", "blue-team", "windows", "evtx", "active-directory", "kerberos", "linux", "ssh", "detection", "mitre-attack"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Security",

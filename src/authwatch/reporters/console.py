@@ -71,7 +71,7 @@ def render(alerts: Sequence[Alert], summary: ScanSummary, console: Console) -> N
     table = Table(show_lines=False, header_style="bold")
     table.add_column("Severity")
     table.add_column("Rule")
-    table.add_column("Source IP")
+    table.add_column("Source")
     table.add_column("Account(s)")
     table.add_column("Attempts", justify="right")
     table.add_column("Time (UTC)")
@@ -81,7 +81,7 @@ def render(alerts: Sequence[Alert], summary: ScanSummary, console: Console) -> N
         table.add_row(
             f"[{SEVERITY_STYLE[alert.severity]}] {alert.severity.label.upper()} [/]",
             alert.rule,
-            alert.source_ip,
+            alert.source,
             _fmt_accounts(alert.usernames),
             str(alert.count),
             _fmt_span(alert.first_seen, alert.last_seen),

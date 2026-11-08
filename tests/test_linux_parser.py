@@ -139,9 +139,9 @@ def test_sample_log_end_to_end():
     assert by_rule["Success after failures"].usernames == ("root",)
     assert by_rule["Success after failures"].count == 15
     assert by_rule["Brute-force"].count == 15
-    assert by_rule["Brute-force"].source_ip == "203.0.113.45"
+    assert by_rule["Brute-force"].source == "203.0.113.45"
 
     spray = by_rule["Password spraying"]
-    assert spray.source_ip == "198.51.100.23"
+    assert spray.source == "198.51.100.23"
     assert len(spray.usernames) == 7
     assert spray.count == 8

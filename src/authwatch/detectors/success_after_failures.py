@@ -11,7 +11,7 @@ from bisect import bisect_left, bisect_right
 from collections.abc import Sequence
 
 from authwatch.config import DetectionConfig
-from authwatch.detectors._common import computers, group_by, normalise_user
+from authwatch.detectors._common import computers, group_by, normalise_user, source_key
 from authwatch.models import Alert, AuthEvent, Severity
 
 RULE = "Success after failures"
@@ -19,12 +19,12 @@ MITRE = ("T1110", "T1078")
 
 
 def detect(events: Sequence[AuthEvent], config: DetectionConfig) -> list[Alert]:
-    failures_by_ip = group_by((e for e in events if not e.success), lambda e: e.source_ip)
-    successes_by_ip = group_by((e for e in events if e.success), lambda e: e.source_ip)
+    failures_by_source = group_by((e for e in events if not e.success), source_key)
+    successes_by_source = group_by((e for e in events if e.success), source_key)
 
     alerts: list[Alert] = []
-    for ip, successes in successes_by_ip.items():
-        failures = failures_by_ip.get(ip, [])
+    for src, successes in successes_by_source.items():
+        failures = failures_by_source.get(src, [])
         if len(failures) < config.saf_min_failures:
             continue
         failure_times = [f.timestamp for f in failures]
@@ -50,14 +50,14 @@ def detect(events: Sequence[AuthEvent], config: DetectionConfig) -> list[Alert]:
                 rule=RULE,
                 severity=Severity.CRITICAL,
                 mitre=MITRE,
-                source_ip=ip or "?",
+                source=src or "?",
                 usernames=(user,),
                 count=len(prior),
                 first_seen=prior[0].timestamp,
                 last_seen=success.timestamp,
                 computers=computers([*prior, success]),
                 description=(
-                    f"Account '{user}' logged on successfully from {ip} after "
+                    f"Account '{user}' logged on successfully from {src} after "
                     f"{len(prior)} failed attempts {target} - verify this logon"
                 ),
             )

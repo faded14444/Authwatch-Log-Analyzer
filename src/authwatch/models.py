@@ -28,8 +28,8 @@ class Severity(IntEnum):
 class AuthEvent:
     """A single authentication attempt, independent of the log source.
 
-    Every parser (Windows EVTX today, Linux auth.log later) converts its raw
-    records into this shape, so detectors never need to know where data came from.
+    Every parser (Windows EVTX, Linux auth.log) converts its raw records into this
+    shape, so detectors never need to know where the data came from.
     """
 
     timestamp: datetime  # timezone-aware, UTC
@@ -39,7 +39,8 @@ class AuthEvent:
     domain: str | None = None
     logon_type: int | None = None
     computer: str | None = None  # host that recorded the event
-    source: str = "unknown"  # e.g. "windows-evtx"
+    source: str = "unknown"  # log source, e.g. "windows-evtx"
+    source_host: str | None = None  # client workstation name, when the log has no IP (NTLM 4776)
 
 
 @dataclass
@@ -49,7 +50,7 @@ class Alert:
     rule: str
     severity: Severity
     mitre: tuple[str, ...]
-    source_ip: str
+    source: str  # IP address, or workstation name for NTLM events without an IP
     usernames: tuple[str, ...]
     count: int
     first_seen: datetime
@@ -66,7 +67,7 @@ class Alert:
             "rule": self.rule,
             "severity": self.severity.label,
             "mitre": list(self.mitre),
-            "source_ip": self.source_ip,
+            "source": self.source,
             "usernames": list(self.usernames),
             "count": self.count,
             "first_seen": self.first_seen.isoformat(),

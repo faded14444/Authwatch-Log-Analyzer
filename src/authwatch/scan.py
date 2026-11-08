@@ -53,6 +53,7 @@ class ScanSummary:
 class ScanResult:
     alerts: list[Alert]
     summary: ScanSummary
+    events: list[AuthEvent] = field(default_factory=list)  # analysed (noise-filtered) events
 
 
 def collect_files(paths: Iterable[str | Path]) -> list[Path]:
@@ -102,4 +103,6 @@ def scan(
     analyzed = filter_noise(events)
     summary.analyzed_events = len(analyzed)
 
-    return ScanResult(alerts=run_detections(analyzed, config), summary=summary)
+    return ScanResult(
+        alerts=run_detections(analyzed, config), summary=summary, events=analyzed
+    )
