@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "authwatch"
+version = "0.1.0"
+description = "Detect brute-force, password spraying and suspicious logons in Windows Security logs (.evtx)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "python-evtx>=0.8",
+    "rich>=13",
+]
+keywords = ["security", "soc", "blue-team", "windows", "evtx", "detection", "mitre-attack"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+    "Environment :: Console",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+authwatch = "authwatch.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/authwatch"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]

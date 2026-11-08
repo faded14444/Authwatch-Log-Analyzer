@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# third-party sample logs (GPL-3.0, download them yourself - see samples/README.md)
+samples/*.evtx
+
+# reports produced by `authwatch scan --output`
+alerts*.json
