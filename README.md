@@ -2,12 +2,17 @@
 
 [![CI](https://github.com/faded14444/Authwatch-Log-Analyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/faded14444/Authwatch-Log-Analyzer/actions/workflows/ci.yml)
 
+![authwatch detecting a brute-force attack, a successful logon after failures and password spraying in samples/auth.log](docs/authwatch-thumbnail.png)
+
 **authwatch** reads raw authentication logs - **Windows Security logs (`.evtx`)** and
 **Linux SSH logs (`auth.log` / `secure`)** - and detects attacks the way a SOC analyst would
 triage them: brute-force, password spraying, and - most importantly - a successful logon
 right after a run of failures.
 
 Every alert is mapped to **MITRE ATT&CK**, has a severity, and explains itself in one sentence.
+
+<details>
+<summary>Full text output of <code>authwatch scan samples/auth.log</code> (incl. per-alert details)</summary>
 
 ```
 $ authwatch scan samples/auth.log
@@ -26,7 +31,9 @@ Details
 
 Summary: 3 alert(s) - 1 critical, 2 high
 ```
-<sub>Output for the synthetic demo log in <a href="samples/auth.log"><code>samples/auth.log</code></a> - run the command above to reproduce it. In a terminal, severities are colour-coded.</sub>
+</details>
+
+<sub>Both the image and the text above are real output for the synthetic demo log <a href="samples/auth.log"><code>samples/auth.log</code></a> - run <code>authwatch scan samples/auth.log</code> to reproduce it.</sub>
 
 ## Features
 
