@@ -60,8 +60,8 @@ def render(alerts: Sequence[Alert], summary: ScanSummary, console: Console) -> N
         )
     if summary.auth_events == 0:
         console.print(
-            "[yellow]No logon events (4624/4625) found. "
-            "Is this really a Windows *Security* log?[/]"
+            "[yellow]No logon events found. Expected a Windows *Security* log "
+            "(events 4624/4625) or a Linux SSH log (auth.log / secure).[/]"
         )
 
     if not alerts:

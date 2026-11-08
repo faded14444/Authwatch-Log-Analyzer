@@ -8,48 +8,23 @@ Everything else in the file is skipped.
 
 from __future__ import annotations
 
-import re
 import xml.etree.ElementTree as ET
 from collections.abc import Iterator
-from dataclasses import dataclass
-from datetime import UTC, datetime
 from pathlib import Path
 
 from authwatch.models import AuthEvent
+from authwatch.parsers.common import LogParseError, ParseStats, parse_timestamp
 
 LOGON_SUCCESS = 4624
 LOGON_FAILURE = 4625
 EVTX_MAGIC = b"ElfFile\x00"
 SOURCE_NAME = "windows-evtx"
 
-_FRACTION = re.compile(r"\.(\d+)")
+__all__ = ["EvtxParseError", "ParseStats", "iter_evtx", "parse_event_xml", "parse_timestamp"]
 
 
-class EvtxParseError(Exception):
+class EvtxParseError(LogParseError):
     """The file is missing, unreadable or not an EVTX log."""
-
-
-@dataclass
-class ParseStats:
-    files: int = 0
-    records: int = 0
-    skipped_records: int = 0  # single records that could not be decoded
-    skipped_chunks: int = 0  # whole 64 KB chunks that could not be read
-
-
-def parse_timestamp(value: str) -> datetime:
-    """Parse EVTX timestamps into timezone-aware UTC datetimes.
-
-    Handles both python-evtx output ("2026-10-01 09:00:00.123456") and native
-    Windows XML ("2026-10-01T09:00:00.1234567Z", 7 fractional digits).
-    """
-    text = value.strip().replace("Z", "+00:00")
-    # datetime supports at most 6 fractional digits (microseconds).
-    text = _FRACTION.sub(lambda m: "." + m.group(1)[:6].ljust(6, "0"), text, count=1)
-    parsed = datetime.fromisoformat(text)
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=UTC)
-    return parsed.astimezone(UTC)
 
 
 def _clean(value: str | None) -> str | None:

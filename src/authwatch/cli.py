@@ -15,7 +15,7 @@ from rich.console import Console
 from authwatch import __version__
 from authwatch.config import DetectionConfig
 from authwatch.models import Severity
-from authwatch.parsers.evtx_parser import EvtxParseError
+from authwatch.parsers import LogParseError
 from authwatch.reporters.console import render
 from authwatch.reporters.json_report import write_json
 from authwatch.scan import collect_files, scan
@@ -40,14 +40,23 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="authwatch",
         description="Detect brute-force, password spraying and suspicious logons "
-        "in Windows Security event logs (.evtx).",
+        "in Windows Security logs (.evtx) and Linux SSH logs (auth.log / secure).",
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    s = sub.add_parser("scan", help="analyse one or more .evtx files or folders")
-    s.add_argument("paths", nargs="+", help=".evtx files or folders (searched recursively)")
+    s = sub.add_parser("scan", help="analyse log files or folders")
+    s.add_argument(
+        "paths", nargs="+",
+        help=".evtx files, Linux auth.log/secure files (also .gz) "
+        "or folders (searched recursively)",
+    )
     s.add_argument("-o", "--output", type=Path, help="also write alerts to this JSON file")
+    s.add_argument(
+        "--linux-year", type=_positive_int, metavar="YEAR",
+        help="year of the LAST line in Linux logs whose lines have no year "
+        "(default: the year the file was last modified)",
+    )
     s.add_argument(
         "--min-severity",
         choices=[sev.label for sev in Severity],
@@ -104,12 +113,15 @@ def main(
         err_console.print(f"[bold red]error:[/] {exc}")
         return EXIT_ERROR
     if not files:
-        err_console.print("[bold red]error:[/] no .evtx files found in the given paths")
+        err_console.print(
+            "[bold red]error:[/] no supported log files (.evtx, auth.log*, secure*) "
+            "found in the given paths"
+        )
         return EXIT_ERROR
 
     try:
-        result = scan(files, _config_from_args(args))
-    except (EvtxParseError, OSError) as exc:
+        result = scan(files, _config_from_args(args), linux_year=args.linux_year)
+    except (LogParseError, OSError) as exc:
         err_console.print(f"[bold red]error:[/] {exc}")
         return EXIT_ERROR
 

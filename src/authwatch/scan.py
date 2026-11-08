@@ -2,18 +2,27 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field
 from datetime import datetime
+from functools import partial
 from pathlib import Path
 
 from authwatch.config import DetectionConfig
 from authwatch.detectors import run_detections
 from authwatch.filters import filter_noise
 from authwatch.models import Alert, AuthEvent
-from authwatch.parsers.evtx_parser import ParseStats, iter_evtx
+from authwatch.parsers import ParseStats, iter_events
 
 ParseFn = Callable[[Path, ParseStats], Iterator[AuthEvent]]
+
+# auth.log, auth.log.1, auth.log.2.gz (Debian/Ubuntu); secure, secure-20261001 (RHEL/Fedora)
+_LINUX_LOG_NAME = re.compile(r"^(auth\.log|secure)([.-].*)?$", re.IGNORECASE)
+
+
+def _is_supported_log(path: Path) -> bool:
+    return path.suffix.lower() == ".evtx" or bool(_LINUX_LOG_NAME.match(path.name))
 
 
 @dataclass
@@ -47,13 +56,17 @@ class ScanResult:
 
 
 def collect_files(paths: Iterable[str | Path]) -> list[Path]:
-    """Expand the CLI arguments into a sorted, de-duplicated list of .evtx files."""
+    """Expand the CLI arguments into a sorted, de-duplicated list of log files.
+
+    Folders are searched recursively for .evtx files and Linux auth logs. A file named
+    explicitly is always used, whatever its name.
+    """
     found: dict[Path, None] = {}
     for raw in paths:
         path = Path(raw)
         if path.is_dir():
             for child in sorted(path.rglob("*")):
-                if child.is_file() and child.suffix.lower() == ".evtx":
+                if child.is_file() and _is_supported_log(child):
                     found[child] = None
         elif path.is_file():
             found[path] = None
@@ -66,8 +79,10 @@ def scan(
     files: Iterable[Path],
     config: DetectionConfig | None = None,
     parse: ParseFn | None = None,
+    linux_year: int | None = None,
 ) -> ScanResult:
-    parse = parse or iter_evtx
+    if parse is None:
+        parse = partial(iter_events, linux_year=linux_year)
     stats = ParseStats()
     summary = ScanSummary()
 

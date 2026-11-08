@@ -10,9 +10,9 @@ from authwatch.scan import collect_files, scan
 
 
 def fake_parser(events_by_name):
-    """Stand-in for iter_evtx: returns prepared events for each file name."""
+    """Stand-in for iter_events: returns prepared events for each file name."""
 
-    def parse(path, stats):
+    def parse(path, stats, **_):
         events = events_by_name.get(path.name, [])
         stats.files += 1
         stats.records += len(events)
@@ -77,7 +77,7 @@ def log_file(tmp_path):
 
 def test_cli_reports_alerts_and_writes_json(monkeypatch, log_file, failures, make_event):
     events = failures(10) + [make_event(200, success=True)]
-    monkeypatch.setattr(scan_module, "iter_evtx", fake_parser({log_file.name: events}))
+    monkeypatch.setattr(scan_module, "iter_events", fake_parser({log_file.name: events}))
     out_json = log_file.parent / "alerts.json"
 
     code, out, _ = run_cli("scan", str(log_file), "--output", str(out_json))
@@ -89,21 +89,21 @@ def test_cli_reports_alerts_and_writes_json(monkeypatch, log_file, failures, mak
 
 
 def test_cli_without_alerts_exits_zero(monkeypatch, log_file, failures):
-    monkeypatch.setattr(scan_module, "iter_evtx", fake_parser({log_file.name: failures(3)}))
+    monkeypatch.setattr(scan_module, "iter_events", fake_parser({log_file.name: failures(3)}))
     code, out, _ = run_cli("scan", str(log_file))
     assert code == EXIT_OK
     assert "No alerts." in out
 
 
 def test_cli_min_severity_filters_alerts(monkeypatch, log_file, failures):
-    monkeypatch.setattr(scan_module, "iter_evtx", fake_parser({log_file.name: failures(10)}))
+    monkeypatch.setattr(scan_module, "iter_events", fake_parser({log_file.name: failures(10)}))
     code, out, _ = run_cli("scan", str(log_file), "--min-severity", "critical")
     assert code == EXIT_OK
     assert "No alerts." in out
 
 
 def test_cli_thresholds_are_configurable(monkeypatch, log_file, failures):
-    monkeypatch.setattr(scan_module, "iter_evtx", fake_parser({log_file.name: failures(3)}))
+    monkeypatch.setattr(scan_module, "iter_events", fake_parser({log_file.name: failures(3)}))
     code, out, _ = run_cli("scan", str(log_file), "--bf-threshold", "3")
     assert code == EXIT_ALERTS
     assert "Brute-force" in out
@@ -118,7 +118,7 @@ def test_cli_missing_path_is_an_error(tmp_path):
 def test_cli_folder_without_evtx_is_an_error(tmp_path):
     code, _, err = run_cli("scan", str(tmp_path))
     assert code == EXIT_ERROR
-    assert "no .evtx files" in err
+    assert "no supported log files" in err
 
 
 def test_cli_rejects_file_that_is_not_evtx(tmp_path):

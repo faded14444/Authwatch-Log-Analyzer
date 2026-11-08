@@ -1,0 +1,40 @@
+Oct  1 09:00:01 web01 CRON[1840]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Oct  1 09:00:01 web01 CRON[1840]: pam_unix(cron:session): session closed for user root
+Oct  1 09:02:17 web01 sshd[1902]: Accepted publickey for alice from 192.0.2.10 port 51544 ssh2: ED25519 SHA256:q1lK8yXq2rTt7uVv6wWx5yZz4AaBbCcD3fJ0aZ0p9mN
+Oct  1 09:02:17 web01 sshd[1902]: pam_unix(sshd:session): session opened for user alice(uid=1000) by (uid=0)
+Oct  1 09:03:05 web01 sudo:    alice : TTY=pts/0 ; PWD=/home/alice ; USER=root ; COMMAND=/usr/bin/apt update
+Oct  1 09:05:40 web01 sshd[1950]: Failed password for bob from 192.0.2.11 port 50210 ssh2
+Oct  1 09:05:48 web01 sshd[1950]: Accepted password for bob from 192.0.2.11 port 50210 ssh2
+Oct  1 09:14:02 web01 sshd[2101]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=203.0.113.45  user=root
+Oct  1 09:14:02 web01 sshd[2101]: Failed password for root from 203.0.113.45 port 50122 ssh2
+Oct  1 09:14:05 web01 sshd[2101]: Failed password for root from 203.0.113.45 port 50122 ssh2
+Oct  1 09:14:09 web01 sshd[2101]: message repeated 4 times: [ Failed password for root from 203.0.113.45 port 50122 ssh2]
+Oct  1 09:14:12 web01 sshd[2101]: Connection closed by authenticating user root 203.0.113.45 port 50122 [preauth]
+Oct  1 09:14:20 web01 sshd[2118]: Failed password for root from 203.0.113.45 port 50140 ssh2
+Oct  1 09:14:24 web01 sshd[2118]: Failed password for root from 203.0.113.45 port 50140 ssh2
+Oct  1 09:14:28 web01 sshd[2118]: message repeated 3 times: [ Failed password for root from 203.0.113.45 port 50140 ssh2]
+Oct  1 09:14:31 web01 sshd[2118]: Connection closed by authenticating user root 203.0.113.45 port 50140 [preauth]
+Oct  1 09:15:40 web01 sshd[2133]: Failed password for root from 203.0.113.45 port 50166 ssh2
+Oct  1 09:15:44 web01 sshd[2133]: Failed password for root from 203.0.113.45 port 50166 ssh2
+Oct  1 09:15:50 web01 sshd[2133]: Failed password for root from 203.0.113.45 port 50166 ssh2
+Oct  1 09:16:30 web01 sshd[2147]: Failed password for root from 203.0.113.45 port 50178 ssh2
+Oct  1 09:17:10 web01 sshd[2160]: Accepted password for root from 203.0.113.45 port 50190 ssh2
+Oct  1 09:17:10 web01 sshd[2160]: pam_unix(sshd:session): session opened for user root(uid=0) by (uid=0)
+Oct  1 09:30:00 web01 systemd[1]: Starting Daily apt download activities...
+Oct  1 09:40:03 web01 sshd[2301]: Invalid user admin from 198.51.100.23 port 40112
+Oct  1 09:40:05 web01 sshd[2301]: Failed password for invalid user admin from 198.51.100.23 port 40112 ssh2
+Oct  1 09:41:47 web01 sshd[2310]: Invalid user oracle from 198.51.100.23 port 40180
+Oct  1 09:41:49 web01 sshd[2310]: Failed password for invalid user oracle from 198.51.100.23 port 40180 ssh2
+Oct  1 09:43:30 web01 sshd[2318]: Invalid user postgres from 198.51.100.23 port 40233
+Oct  1 09:43:32 web01 sshd[2318]: Failed password for invalid user postgres from 198.51.100.23 port 40233 ssh2
+Oct  1 09:45:12 web01 sshd[2327]: Failed password for ubuntu from 198.51.100.23 port 40291 ssh2
+Oct  1 09:46:55 web01 sshd-session[2335]: Invalid user test from 198.51.100.23 port 40350
+Oct  1 09:46:57 web01 sshd-session[2335]: Failed password for invalid user test from 198.51.100.23 port 40350 ssh2
+Oct  1 09:48:31 web01 sshd[2342]: Invalid user git from 198.51.100.23 port 40402
+Oct  1 09:48:33 web01 sshd[2342]: Failed password for invalid user git from 198.51.100.23 port 40402 ssh2
+Oct  1 09:50:10 web01 sshd[2350]: Invalid user deploy from 198.51.100.23 port 40467
+Oct  1 09:50:12 web01 sshd[2350]: Failed password for invalid user deploy from 198.51.100.23 port 40467 ssh2
+Oct  1 09:51:52 web01 sshd[2361]: Invalid user admin from 198.51.100.23 port 40519
+Oct  1 09:51:54 web01 sshd[2361]: Failed password for invalid user admin from 198.51.100.23 port 40519 ssh2
+Oct  1 10:00:01 web01 CRON[2402]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+Oct  1 10:00:01 web01 CRON[2402]: pam_unix(cron:session): session closed for user root

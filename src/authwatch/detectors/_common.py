@@ -68,8 +68,13 @@ def find_bursts(
 
 
 def normalise_user(event: AuthEvent) -> str:
-    """Windows account names are case-insensitive: ADMIN == admin."""
-    return (event.username or "").lower()
+    """Account key for grouping.
+
+    Windows account names are case-insensitive (ADMIN == admin); Linux user names
+    are case-sensitive (Root and root are two different accounts).
+    """
+    name = event.username or ""
+    return name if event.source == "linux-auth" else name.lower()
 
 
 def computers(events: Iterable[AuthEvent]) -> tuple[str, ...]:

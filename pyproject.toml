@@ -4,15 +4,15 @@ build-backend = "hatchling.build"
 
 [project]
 name = "authwatch"
-version = "0.1.0"
-description = "Detect brute-force, password spraying and suspicious logons in Windows Security logs (.evtx)"
+version = "0.2.0"
+description = "Detect brute-force, password spraying and suspicious logons in Windows (.evtx) and Linux SSH logs"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "python-evtx>=0.8",
     "rich>=13",
 ]
-keywords = ["security", "soc", "blue-team", "windows", "evtx", "detection", "mitre-attack"]
+keywords = ["security", "soc", "blue-team", "windows", "evtx", "linux", "ssh", "detection", "mitre-attack"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Security",
@@ -38,3 +38,7 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+# test data contains real-world log lines, which are naturally long
+"tests/*" = ["E501"]
